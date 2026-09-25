@@ -54,29 +54,67 @@
   }
   const tip = (origin, name, note) => `data-origin="${origin}" data-name="${name}" data-note="${note.replace(/"/g, "&quot;")}"`;
 
-  /* ---------- shared defs ---------- */
-  function defs() {
-    return `<defs>
-      <filter id="clothTex" x="0" y="0" width="100%" height="100%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.9 0.35" numOctaves="3" seed="7" result="n"/>
-        <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.22  0 0 0 0 0.08  0 0 0 0.16 0"/>
-        <feComposite in2="SourceGraphic" operator="in"/>
-        <feBlend in2="SourceGraphic" mode="multiply"/>
-      </filter>
-      <filter id="mudTex" x="0" y="0" width="100%" height="100%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="4" seed="3" result="a"/>
-        <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="9" result="b"/>
-        <feBlend in="a" in2="b" mode="multiply" result="c"/>
-        <feColorMatrix in="c" type="matrix" values="0 0 0 0 0.18  0 0 0 0 0.06  0 0 0 0 0.02  0 0 0 0.5 0"/>
-        <feComposite in2="SourceGraphic" operator="in"/>
-        <feBlend in2="SourceGraphic" mode="multiply"/>
-      </filter>
-      <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter>
+  /* ---------- textures ----------
+     Generated once as small raster tiles and used as SVG pattern fills.
+     (Live feTurbulence filters were re-computed on every repaint and made
+     scrolling and dragging stutter.) The tiles are periodic, so they repeat
+     seamlessly. */
+  const TEX = {};
+  function periodicNoise(R, n) {
+    const g = Array.from({ length: n * n }, () => R());
+    const at = (i, j) => g[(((j % n) + n) % n) * n + (((i % n) + n) % n)];
+    return (u, v) => {
+      const gx = u * n, gy = v * n, x0 = Math.floor(gx), y0 = Math.floor(gy);
+      const fx = gx - x0, fy = gy - y0, sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+      const a = at(x0, y0), b = at(x0 + 1, y0), c = at(x0, y0 + 1), e = at(x0 + 1, y0 + 1);
+      return a + (b - a) * sx + (c - a) * sy + (a - b - c + e) * sx * sy;
+    };
+  }
+  function noiseTile(kind) {
+    if (TEX[kind]) return TEX[kind];
+    const size = kind === "mud" ? 256 : 128;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = size;
+    const ctx = cv.getContext("2d"), img = ctx.createImageData(size, size), d = img.data;
+    const R = rng(kind === "mud" ? 3 : 7);
+    const low = periodicNoise(R, kind === "mud" ? 5 : 16), mid = periodicNoise(R, kind === "mud" ? 14 : 48);
+    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+      const u = x / size, v = y / size, i = (y * size + x) * 4;
+      let a;
+      if (kind === "mud") { a = 0.07 + 0.36 * low(u, v) * (0.55 + 0.45 * mid(u, v)) + (R() - 0.5) * 0.1; d[i] = 46; d[i + 1] = 15; d[i + 2] = 5; }
+      else { const weave = 0.75 + 0.25 * Math.sin((y * Math.PI) / 2); a = (0.03 + 0.11 * mid(u, v)) * weave + (R() - 0.5) * 0.05 + (R() < 0.015 ? 0.07 : 0); d[i] = 90; d[i + 1] = 56; d[i + 2] = 20; }
+      d[i + 3] = Math.max(0, Math.min(255, Math.round(a * 255)));
+    }
+    ctx.putImageData(img, 0, 0);
+    return (TEX[kind] = cv.toDataURL("image/png"));
+  }
+
+  /* ---------- shared defs ----------
+     Patterns live once in a hidden document-level <svg>; every inline SVG
+     references them by id. defs(true) returns a full standalone copy for
+     exported files. */
+  function defsInner() {
+    return `
+      <pattern id="clothTex" patternUnits="userSpaceOnUse" width="256" height="256"><image href="${noiseTile("cloth")}" width="256" height="256" preserveAspectRatio="none"/></pattern>
+      <pattern id="mudTex" patternUnits="userSpaceOnUse" width="512" height="512"><image href="${noiseTile("mud")}" width="512" height="512" preserveAspectRatio="none"/></pattern>
       <pattern id="kpatRed" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="${C.madder}"/><circle cx="4" cy="4" r="1.3" fill="${C.cream}"/></pattern>
       <pattern id="kpatIndigo" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="${C.indigo}"/><path d="M0,4 L4,0 L8,4 L4,8Z" fill="none" stroke="${C.cream}" stroke-width=".7"/></pattern>
       <pattern id="kpatMustard" width="7" height="7" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="${C.mustard}"/><circle cx="3.5" cy="3.5" r="1" fill="${C.kasimi}"/></pattern>
-      <pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><line x1="0" y1="0" x2="0" y2="5" stroke="${C.kasimi}" stroke-width=".8" opacity=".55"/></pattern>
-    </defs>`;
+      <pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><line x1="0" y1="0" x2="0" y2="5" stroke="${C.kasimi}" stroke-width=".8" opacity=".55"/></pattern>`;
+  }
+  let globalDefs = false;
+  function defs(standalone) {
+    if (standalone) return `<defs>${defsInner()}</defs>`;
+    if (!globalDefs && typeof document !== "undefined") {
+      globalDefs = true;
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("aria-hidden", "true");
+      svg.setAttribute("width", "0"); svg.setAttribute("height", "0");
+      svg.style.cssText = "position:absolute;width:0;height:0;overflow:hidden;pointer-events:none";
+      svg.innerHTML = `<defs>${defsInner()}</defs>`;
+      document.body.appendChild(svg);
+    }
+    return "";
   }
 
   /* ---------- Kalamkari motifs ---------- */
@@ -246,7 +284,7 @@
   /* ---------- Layer builders ---------- */
   function layerCloth() {
     let s = `<rect width="${W}" height="${H}" fill="${C.cream}"/>`;
-    s += `<rect width="${W}" height="${H}" fill="${C.cream}" filter="url(#clothTex)"/>`;
+    s += `<rect width="${W}" height="${H}" fill="url(#clothTex)"/>`;
     return s;
   }
 
@@ -333,7 +371,7 @@
     s += "</g>";
     // geru mud wall (Warli ground)
     s += `<path d="${archPath}" fill="${C.geru}" ${tip("W", "Geru mud wall", "Warli paintings live on hut walls washed with mud and cow-dung, then red ochre (geru).")}/>`;
-    s += `<path d="${archPath}" fill="${C.geru}" filter="url(#mudTex)" pointer-events="none"/>`;
+    s += `<path d="${archPath}" fill="url(#mudTex)" pointer-events="none"/>`;
     s += `<path d="${archPath}" fill="none" stroke="${C.kasimi}" stroke-width="3"/>`;
     s += `<path d="${archPath}" fill="none" stroke="${C.cream}" stroke-width="1.2" transform="translate(0,6) scale(1,0.995)" opacity=".5" stroke-dasharray="1 6" stroke-linecap="round"/>`;
     return s;
@@ -571,7 +609,7 @@
   function flatten(layers) {
     let body = "";
     layers.forEach((svg) => { body += svg.innerHTML.replace(/<defs>[\s\S]*?<\/defs>/, ""); });
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${defs()}${body}</svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${defs(true)}${body}</svg>`;
   }
 
   window.Sangam = {

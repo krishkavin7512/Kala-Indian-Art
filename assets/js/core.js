@@ -81,6 +81,31 @@
     }
   }
 
+  /* ---------- Page intros ----------
+     Each page registers its hero entrance with KALA.intro(fn). The timeline is built (and its
+     starting state applied) BEFORE the loader or curtain lifts, then played as the page is
+     revealed, so visitors never see the finished hero first and then watch it replay. */
+  const introFns = [];
+  let introTls = null;
+  KALA.intro = (fn) => {
+    if (introTls) { const tl = buildIntro(fn); if (tl) tl.play(); return; }
+    introFns.push(fn);
+  };
+  function buildIntro(fn) {
+    try { const tl = fn(); return tl && typeof tl.pause === "function" ? tl.pause(0) : null; }
+    catch (e) { console.error(e); return null; }
+  }
+  function prepIntros() {
+    introTls = [];
+    if (!hasGSAP || reduced || SHOT) return;
+    introFns.splice(0).forEach((fn) => { const tl = buildIntro(fn); if (tl) introTls.push(tl); });
+  }
+  function playIntros(delay) {
+    const tls = introTls || [];
+    introTls = [];
+    tls.forEach((tl) => (delay ? gsap.delayedCall(delay, () => tl.play()) : tl.play()));
+  }
+
   /* ---------- Loader ---------- */
   function mandalaSVG() {
     let s = '<svg class="loader__mandala" viewBox="-100 -100 200 200" aria-hidden="true">';
@@ -117,6 +142,7 @@
         const cols = KALA.curtain.querySelectorAll("i");
         gsap.set(cols, { scaleY: 1, transformOrigin: "top" });
         show();
+        playIntros(0.25);
         gsap.to(cols, { scaleY: 0, duration: 0.9, ease: "kalaIO", stagger: 0.06, delay: 0.05, onComplete: resolve });
         return;
       }
@@ -146,7 +172,7 @@
       ready.then(() => tl.then(() => {
         gsap.to(st, { v: 100, duration: 0.45, ease: "power2.out", onUpdate: () => { count.textContent = String(Math.round(st.v)).padStart(3, "0"); gsap.set(bar, { scaleX: st.v / 100 }); } });
         gsap.to(el.querySelector(".loader__inner"), { opacity: 0, y: -30, duration: 0.7, delay: 0.35, ease: "power2.in" });
-        gsap.to(el, { clipPath: "inset(0 0 100% 0)", duration: 1.1, delay: 0.75, ease: "kalaIO", onStart: () => setTimeout(resolve, 350), onComplete: () => el.remove() });
+        gsap.to(el, { clipPath: "inset(0 0 100% 0)", duration: 1.1, delay: 0.75, ease: "kalaIO", onStart: () => { playIntros(0.45); setTimeout(resolve, 350); }, onComplete: () => el.remove() });
       }));
     });
   }
@@ -275,6 +301,32 @@
     }
   }
 
+  /* ---------- Nav: hide on scroll down, frosted on scroll up, peek at top edge ---------- */
+  function initNav() {
+    const nav = document.querySelector(".nav");
+    if (!nav) return;
+    let lastY = window.scrollY, ticking = false, peek = false;
+    const update = () => {
+      ticking = false;
+      const y = window.scrollY, dy = y - lastY;
+      if (Math.abs(dy) > 6) {
+        if (dy > 0 && y > 140 && !peek && !nav.contains(document.activeElement)) nav.classList.add("is-hidden");
+        else if (dy < 0) nav.classList.remove("is-hidden");
+        lastY = y;
+      }
+      nav.classList.toggle("is-solid", y > 40);
+    };
+    addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+    addEventListener("pointermove", (e) => {
+      const near = e.clientY < 84;
+      if (near === peek) return;
+      peek = near;
+      if (near) nav.classList.remove("is-hidden");
+    }, { passive: true });
+    nav.addEventListener("focusin", () => nav.classList.remove("is-hidden"));
+    update();
+  }
+
   /* ---------- Magnetic buttons ---------- */
   function initMagnetic() {
     if (!finePointer || reduced || !hasGSAP) return;
@@ -295,9 +347,11 @@
       injectChrome();
       renderFooter();
       initScroll();
+      initNav();
       initTransitions();
       initSound();
       initMagnetic();
+      prepIntros();
       runLoader().then(() => {
         initReveals();
         document.documentElement.classList.add("is-loaded");

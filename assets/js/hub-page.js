@@ -63,13 +63,6 @@
     $(".h-hero__mandala").innerHTML = s + "</svg>";
   }
 
-  /* ---------- Portal backgrounds ---------- */
-  function portals() {
-    const G = window.INDIA_GEO;
-    if (G) $(".portal--map .portal__bg").innerHTML = `<svg viewBox="0 0 ${G.w} ${G.h}" preserveAspectRatio="xMidYMid meet"><path class="outline" d="${G.outline}"/><path class="inner" d="${G.inner}"/></svg>`;
-    if (window.Sangam) { const art = $(".portal--fusion .art"); window.Sangam.render(art, { seed: 2026 }); }
-  }
-
   function intro() {
     if (KALA.reduced) return;
     const h1 = $(".h-hero h1");
@@ -83,10 +76,10 @@
     gsap.to(".h-hero__inner", { yPercent: 30, opacity: 0, ease: "none", scrollTrigger: { trigger: ".h-hero", start: "top top", end: "bottom top", scrub: true } });
     gsap.set(".portal", { y: 80, opacity: 0 });
     KALA.onView($(".portals"), () => gsap.to(".portal", { y: 0, opacity: 1, duration: 1.4, ease: "kala", stagger: 0.12 }), 0.1);
+    return tl;
   }
 
   mandala();
   dust();
-  portals();
-  KALA.ready.then(intro);
+  KALA.intro(intro);
 })();

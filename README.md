@@ -38,7 +38,7 @@ A custom SVG map of India drawn from **official Survey of India boundaries** and
 
 - Pins are colour-coded by art form: architecture & sculpture, painting, textile & craft, ancient sites, and modern movements.
 - **Filter** by art form or age, or search. Click a place to fly to it and read its story, with a full-resolution photograph and UNESCO status.
-- **Trails of influence** animate how styles travelled: *The Buddhist Way*, *Rise of the Temple*, *Courts of the Brush* and *Living Lines*.
+- **Trails of influence** animate how styles travelled: *The Buddhist Way*, *Rise of the Temple*, *Courts of the Brush* and *Living Lines*. A navigation marker drives each hop from stop to stop. The road already travelled is solid, the road ahead is dotted, and you can pause, step back or replay.
 - Places link back to their artifacts in the timeline.
 
 | | |
@@ -67,6 +67,14 @@ A custom SVG map of India drawn from **official Survey of India boundaries** and
 - **Motion:** [GSAP](https://gsap.com) (ScrollTrigger, SplitText, Flip, CustomEase) and [Lenis](https://lenis.darkroom.engineering) smooth scrolling. The loader, page transitions, custom cursor and magnetic buttons are all custom.
 - **Map:** [D3](https://d3js.org) for projection and zoom. The boundary data is simplified with mapshaper and pre-projected into SVG paths.
 - **Generative art:** the Warli and Kalamkari motifs (dancers, blossoms, peacocks, paisleys, borders) are procedural SVG functions (`assets/js/fusion-art.js`), reused by the artwork, the hero and the studio.
+- **Performance:**
+  - Textures are baked into cached raster patterns instead of live SVG filters.
+  - Heavy static vector art is pre-rendered to images.
+  - Continuous motion runs as GPU-composited CSS and pauses off-screen.
+  - Off-screen sections skip rendering.
+  - Pins, routes and the marker live on their own layer above the map.
+  - Hero entrances are prepared before the loader lifts, so nothing flashes or replays.
+- **Navigation bar:** hides while you scroll down, returns as frosted glass when you scroll up, and peeks in when the pointer reaches the top edge.
 - **Sound:** an optional tanpura drone synthesised live with the Web Audio API. No audio files are used.
 - **Works offline:** every library, font and image is bundled locally, so the folder runs without internet. Only the 3D scans need a connection.
 

@@ -43,16 +43,20 @@
       .from(".d-hero__map .inner", { opacity: 0, duration: 1.4 }, 2.2)
       .from(".d-hero__map .hp", { scale: 0, opacity: 0, duration: 0.8, ease: "back.out(3)", stagger: 0.05 }, 1.4);
     gsap.to(".d-hero__map", { yPercent: 12, ease: "none", scrollTrigger: { trigger: ".d-hero", start: "top top", end: "bottom top", scrub: true } });
+    return tl;
   }
 
   /* ---------- Atlas ---------- */
   const state = { cats: new Set(Object.keys(M.cats)), age: "all", q: "", active: null, trail: null, mapActive: false };
-  let svg, world, zoom, currentT = d3.zoomIdentity, pinSel;
+  let svg, world, over, overWorld, zoom, currentT = d3.zoomIdentity, pinSel;
 
   function buildAtlas() {
     svg = d3.select(".atlas__svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
-    svg.append("defs").html(`<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`);
     world = svg.append("g").attr("class", "world");
+    // Pins, routes and the travel marker live in a separate overlay <svg> on its own GPU layer,
+    // so animating them never forces the detailed state geometry underneath to repaint.
+    over = d3.select(".atlas__overlay").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
+    overWorld = over.append("g").attr("class", "world");
     const grat = d3.geoGraticule().extent([[55, -5], [110, 45]]).step([5, 5]);
     world.append("path").attr("class", "grat").attr("d", d3.geoPath(proj)(grat()));
     const seas = [["Arabian Sea", 65.5, 15.5], ["Bay of Bengal", 88.5, 15.5]];
@@ -60,9 +64,13 @@
     world.append("g").attr("class", "states").selectAll("path").data(G.states).join("path").attr("class", "state").attr("d", (d) => d.d)
       .on("pointerenter", (e, d) => { $(".atlas__state").textContent = d.name; $(".atlas__state").style.opacity = 1; })
       .on("pointerleave", () => { $(".atlas__state").style.opacity = 0; });
+    // soft glow = two wide translucent strokes under the crisp outline (no blur filter to recompute)
+    world.append("path").attr("class", "outline-glow outline-glow--wide").attr("d", G.outline);
+    world.append("path").attr("class", "outline-glow").attr("d", G.outline);
     world.append("path").attr("class", "outline").attr("d", G.outline);
-    world.append("g").attr("class", "routes");
-    const pins = world.append("g").attr("class", "pins");
+    overWorld.append("g").attr("class", "routes");
+    const pins = overWorld.append("g").attr("class", "pins");
+    overWorld.append("g").attr("class", "marker-layer");
     pinSel = pins.selectAll("g").data(places).join("g")
       .attr("class", "pin").attr("tabindex", 0).attr("role", "button")
       .attr("aria-label", (d) => `${d.name}, ${d.state}`)
@@ -81,7 +89,10 @@
       .on("zoom", (e) => {
         currentT = e.transform;
         world.attr("transform", currentT);
+        overWorld.attr("transform", currentT);
+        overWorld.node().style.setProperty("--k", currentT.k);
         pinSel.attr("transform", (d) => `translate(${d.x},${d.y}) scale(${1 / currentT.k})`);
+        placeMarker();
         world.selectAll(".sea").style("font-size", `${22 / Math.sqrt(currentT.k)}px`);
         $(".atlas").classList.toggle("show-labels", currentT.k > 2.6);
       });
@@ -261,58 +272,150 @@
   }
 
   /* ---------- Trails ---------- */
+  /* Trails of influence.
+     Each hop between two stops is its own gentle arc, like a flight path. Hops already travelled
+     are drawn solid, hops still ahead are dotted, and a navigation marker drives along the
+     current hop from one stop to the next. */
+  const HOLD = 2600;            // ms to pause at each stop
+  function arcPath(a, b, bend) {
+    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
+    const cx = mx - (dy / d) * d * bend, cy = my + (dx / d) * d * bend;
+    return `M${a.x.toFixed(1)},${a.y.toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${b.x.toFixed(1)},${b.y.toFixed(1)}`;
+  }
+  function buildMarker(color) {
+    const layer = overWorld.select(".marker-layer");
+    layer.selectAll("*").remove();
+    const g = layer.append("g").attr("class", "nav-marker").style("--c", color);
+    g.append("circle").attr("class", "nav-marker__pulse").attr("r", 14);
+    g.append("circle").attr("class", "nav-marker__disc").attr("r", 11);
+    g.append("path").attr("class", "nav-marker__arrow").attr("d", "M7.5,0 L-5,-6.5 L-2,0 L-5,6.5 Z");
+    return g;
+  }
+  function placeMarker() {
+    const tr = state.trail;
+    if (!tr || !tr.marker) return;
+    const k = currentT.k;
+    tr.marker.attr("transform", `translate(${tr.mx},${tr.my}) rotate(${tr.mang}) scale(${1 / k})`);
+  }
+  function setMarkerAt(seg, l) {
+    const tr = state.trail, n = seg.node, len = seg.len;
+    const p = n.getPointAtLength(Math.max(0, Math.min(len, l)));
+    const a = n.getPointAtLength(Math.max(0, Math.min(len, l - 2)));
+    const b = n.getPointAtLength(Math.max(0, Math.min(len, l + 2)));
+    tr.mx = p.x; tr.my = p.y;
+    if (Math.hypot(b.x - a.x, b.y - a.y) > 0.01) tr.mang = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+    placeMarker();
+  }
+  function setSegDone(i, frac) {
+    const seg = state.trail.segs[i];
+    seg.done.attr("stroke-dashoffset", seg.len * (1 - frac));
+    seg.ahead.style("opacity", frac >= 1 ? 0 : 1);
+  }
   function playTrail(id) {
     const t = M.trails.find((x) => x.id === id); if (!t) return;
     stopTrail(true);
     closeDrawer();
-    state.trail = { t, i: -1, paused: false, timer: null };
-    $$(".trail-btn").forEach((b) => b.classList.toggle("is-on", b.dataset.trail === id));
     const pts = t.stops.map((s) => byId[s]);
-    pinSel.classed("is-trail", (d) => t.stops.includes(d.id));
+    state.trail = { t, i: 0, paused: false, timer: null, tween: null, segs: [], marker: null, mx: pts[0].x, my: pts[0].y, mang: 0 };
+    const tr = state.trail;
+    $$(".trail-btn").forEach((b) => b.classList.toggle("is-on", b.dataset.trail === id));
+    pinSel.classed("is-trail", (d) => t.stops.includes(d.id)).classed("is-visited", false).classed("is-active", (d) => d.id === pts[0].id);
     applyFilters();
-    const line = d3.line().x((d) => d.x).y((d) => d.y).curve(d3.curveCatmullRom.alpha(0.5));
-    const routes = world.select(".routes");
-    routes.selectAll("*").remove();
-    const path = routes.append("path").attr("class", "route").attr("d", line(pts)).attr("stroke", t.color);
-    routes.append("path").attr("class", "route-dots").attr("d", line(pts)).attr("stroke", "#fff");
-    const len = path.node().getTotalLength();
-    path.attr("stroke-dasharray", `${len} ${len}`).attr("stroke-dashoffset", len).transition().duration(2600).ease(d3.easeCubicInOut).attr("stroke-dashoffset", 0);
+    const routes = overWorld.select(".routes");
+    routes.interrupt().style("opacity", 1).selectAll("*").remove();
+    routes.style("--c", t.color);
+    for (let i = 0; i < pts.length - 1; i++) {
+      const d = arcPath(pts[i], pts[i + 1], i % 2 ? -0.16 : 0.16);
+      const g = routes.append("g").attr("class", "hop");
+      const ahead = g.append("path").attr("class", "hop__ahead").attr("d", d);
+      g.append("path").attr("class", "hop__glow").attr("d", d);
+      const done = g.append("path").attr("class", "hop__done").attr("d", d);
+      const len = done.node().getTotalLength();
+      done.attr("stroke-dasharray", `${len} ${len + 1}`).attr("stroke-dashoffset", len);
+      g.select(".hop__glow").attr("stroke-dasharray", `${len} ${len + 1}`).attr("stroke-dashoffset", len);
+      tr.segs.push({ node: done.node(), len, done: g.selectAll(".hop__done, .hop__glow"), ahead });
+    }
+    // fade the dotted road in, hop by hop
+    routes.selectAll(".hop__ahead").style("opacity", 0).transition().delay((d, i) => 300 + i * 90).duration(500).style("opacity", 1);
+    tr.marker = buildMarker(t.color);
+    tr.mang = pts.length > 1 ? (Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x) * 180) / Math.PI : 0;
+    placeMarker();
     const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
-    fitBox(Math.min(...xs) - 40, Math.min(...ys) - 40, Math.max(...xs) + 40, Math.max(...ys) + 40, 1500, 4);
+    fitBox(Math.min(...xs) - 40, Math.min(...ys) - 40, Math.max(...xs) + 40, Math.max(...ys) + 40, 1400, 4);
     const cap = $(".caption");
     cap.style.setProperty("--c", t.color);
     cap.querySelector(".caption__top span").textContent = t.name;
-    cap.querySelector(".caption__name").textContent = t.sub;
-    cap.querySelector(".caption__note").textContent = `${t.stops.length} stops · starting at ${pts[0].name}`;
+    cap.querySelector(".caption__top em").textContent = `Stop 1 / ${t.stops.length}`;
+    cap.querySelector(".caption__name").textContent = pts[0].name;
+    cap.querySelector(".caption__note").textContent = t.notes[0] || "";
+    gsap.set(cap.querySelector(".caption__bar i"), { width: `${(1 / t.stops.length) * 100}%` });
     cap.classList.add("is-on");
-    state.trail.timer = setTimeout(() => trailStep(1), 2800);
+    updateCaptionButtons();
+    tr.timer = setTimeout(() => trailStep(1), HOLD + 600);
     if (!isDesktop()) $(".atlas__panel").classList.add("is-collapsed");
+  }
+  function updateCaptionButtons() {
+    const tr = state.trail; if (!tr) return;
+    const cap = $(".caption");
+    cap.querySelector('[data-a="prev"]').disabled = tr.i === 0;
+    const last = tr.i >= tr.t.stops.length - 1;
+    cap.querySelector('[data-a="next"]').disabled = last;
+    cap.querySelector('[data-a="pause"]').textContent = last ? "Replay" : tr.paused ? "Play" : "Pause";
+  }
+  function arrive(i) {
+    const tr = state.trail;
+    const p = byId[tr.t.stops[i]];
+    pinSel.classed("is-active", (d) => d.id === p.id).classed("is-visited", (d) => tr.t.stops.slice(0, i).includes(d.id));
+    const cap = $(".caption");
+    cap.querySelector(".caption__top em").textContent = `Stop ${i + 1} / ${tr.t.stops.length}`;
+    cap.querySelector(".caption__name").textContent = p.name;
+    cap.querySelector(".caption__note").textContent = tr.t.notes[i] || "";
+    gsap.to(cap.querySelector(".caption__bar i"), { width: `${((i + 1) / tr.t.stops.length) * 100}%`, duration: 0.5, ease: "power2.out" });
+    updateCaptionButtons();
+    if (!tr.paused && i < tr.t.stops.length - 1) tr.timer = setTimeout(() => trailStep(1), HOLD);
   }
   function trailStep(dir) {
     const tr = state.trail; if (!tr) return;
     clearTimeout(tr.timer);
-    tr.i = Math.max(0, Math.min(tr.t.stops.length - 1, tr.i + dir));
-    const p = byId[tr.t.stops[tr.i]];
-    pinSel.classed("is-active", (d) => d.id === p.id);
-    flyTo(p, 3.4, 1500);
+    if (tr.tween) { tr.tween.progress(1); tr.tween = null; }
+    const from = tr.i, to = Math.max(0, Math.min(tr.t.stops.length - 1, from + dir));
+    if (to === from) return;
+    tr.i = to;
+    const a = byId[tr.t.stops[from]], b = byId[tr.t.stops[to]];
+    const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
+    const pad = Math.max(40, 0.25 * Math.max(x1 - x0, y1 - y0));
+    fitBox(x0 - pad, y0 - pad, x1 + pad, y1 + pad, 1100, 3.6);
+    if (dir < 0) {
+      // step back: un-travel the hop and put the marker back at the previous stop
+      setSegDone(to, 0);
+      setMarkerAt(tr.segs[to], 0);
+      arrive(to);
+      return;
+    }
+    const seg = tr.segs[from];
+    const st = { l: 0 };
+    const dur = Math.min(3.2, Math.max(1.6, seg.len / 110));
+    pinSel.classed("is-active", false);
     const cap = $(".caption");
-    cap.querySelector(".caption__top em").textContent = `Stop ${tr.i + 1} / ${tr.t.stops.length}`;
-    cap.querySelector(".caption__name").textContent = p.name;
-    cap.querySelector(".caption__note").textContent = tr.t.notes[tr.i] || "";
-    const bar = cap.querySelector(".caption__bar i");
-    gsap.killTweensOf(bar);
-    gsap.fromTo(bar, { width: `${(tr.i / tr.t.stops.length) * 100}%` }, { width: `${((tr.i + 1) / tr.t.stops.length) * 100}%`, duration: 4.6, ease: "none" });
-    if (!tr.paused && tr.i < tr.t.stops.length - 1) tr.timer = setTimeout(() => trailStep(1), 4800);
+    cap.querySelector(".caption__top em").textContent = `Travelling · ${from + 1} → ${to + 1}`;
+    tr.tween = gsap.to(st, {
+      l: seg.len, duration: dur, delay: 0.35, ease: "power1.inOut",
+      onUpdate: () => { setMarkerAt(seg, st.l); seg.done.attr("stroke-dashoffset", seg.len - st.l); },
+      onComplete: () => { tr.tween = null; setSegDone(from, 1); arrive(to); },
+    });
   }
   function stopTrail(silent) {
     const tr = state.trail;
     if (!tr) return;
     clearTimeout(tr.timer);
+    if (tr.tween) tr.tween.kill();
     state.trail = null;
     $(".caption").classList.remove("is-on");
     $$(".trail-btn").forEach((b) => b.classList.remove("is-on"));
-    world.select(".routes").selectAll("*").transition().duration(600).style("opacity", 0).remove();
-    pinSel.classed("is-trail", false).classed("is-active", false);
+    overWorld.select(".routes").transition().duration(500).style("opacity", 0).on("end", function () { d3.select(this).selectAll("*").remove(); d3.select(this).style("opacity", 1); });
+    overWorld.select(".marker-layer").selectAll("*").remove();
+    pinSel.classed("is-trail", false).classed("is-active", false).classed("is-visited", false);
     applyFilters();
   }
   function initCaption() {
@@ -320,9 +423,16 @@
     cap.addEventListener("click", (e) => {
       const b = e.target.closest("button"); if (!b || !state.trail) return;
       const a = b.dataset.a;
-      if (a === "prev") trailStep(-1);
-      if (a === "next") trailStep(1);
-      if (a === "open") { const id = state.trail.t.stops[Math.max(0, state.trail.i)]; state.trail.paused = true; clearTimeout(state.trail.timer); stopTrail(); select(id); }
+      if (a === "prev") { state.trail.paused = true; trailStep(-1); updateCaptionButtons(); }
+      if (a === "next") { trailStep(1); }
+      if (a === "pause") {
+        const tr = state.trail;
+        if (tr.i >= tr.t.stops.length - 1) { playTrail(tr.t.id); return; }
+        tr.paused = !tr.paused;
+        if (tr.paused) clearTimeout(tr.timer); else if (!tr.tween) trailStep(1);
+        updateCaptionButtons();
+      }
+      if (a === "open") { const id = state.trail.t.stops[Math.max(0, state.trail.i)]; stopTrail(); select(id); }
       if (a === "stop") { stopTrail(); goHome(1200); }
     });
   }
@@ -359,8 +469,8 @@
     else if (state.trail) stopTrail();
     else closeDrawer();
   });
+  KALA.intro(heroIntro);
   KALA.ready.then(() => {
-    heroIntro();
     const hash = decodeURIComponent(location.hash.slice(1));
     if (hash && byId[hash]) {
       const atlas = $(".atlas");

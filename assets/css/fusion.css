@@ -7,18 +7,24 @@
   --cream: #f1e3c2; --madder: #a3302a; --indigo: #1f3a63; --mustard: #c99a2e; --kasimi: #1a120c; --leaf: #56703a;
 }
 body { background: #0e0a08; }
+.nav { --nav-bg: rgba(14, 10, 8, 0.8); --nav-scrim: 0.34; }
 
 /* ---------- Hero: two worlds + draggable confluence ---------- */
 .s-hero { position: relative; height: 100svh; min-height: 640px; overflow: hidden; --split: 50%; user-select: none; }
 .s-hero__side { position: absolute; inset: 0; overflow: hidden; z-index: 1; }
 .s-hero__side--w { background: var(--geru); }
-.s-hero__side--w::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 40%, rgba(255,200,150,.12), transparent 60%), url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.03' numOctaves='4'/><feColorMatrix values='0 0 0 0 .2  0 0 0 0 .06  0 0 0 0 .02  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); mix-blend-mode: multiply; }
+.s-hero__side--w::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 40%, rgba(255,200,150,.12), transparent 60%), url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.03' numOctaves='4'/><feColorMatrix values='0 0 0 0 .2  0 0 0 0 .06  0 0 0 0 .02  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
 .s-hero__side--k { background: var(--cream); clip-path: inset(0 0 0 var(--split)); z-index: 2; }
-.s-hero__side--k::before { content: ""; position: absolute; inset: 0; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9 .3' numOctaves='3'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .22  0 0 0 0 .08  0 0 0 .14 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); mix-blend-mode: multiply; pointer-events: none; }
+.s-hero__side--k::before { content: ""; position: absolute; inset: 0; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9 .3' numOctaves='3'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .22  0 0 0 0 .08  0 0 0 .14 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); pointer-events: none; }
 .s-hero__art { position: absolute; top: 50%; width: min(78vh, 62vw); aspect-ratio: 1; transform: translate(-50%, -50%); }
 .s-hero__side--w .s-hero__art { left: 25%; }
 .s-hero__side--k .s-hero__art { left: 75%; }
 .s-hero__art svg { width: 100%; height: 100%; overflow: visible; }
+.spin-wrap { width: 100%; height: 100%; will-change: transform; animation: sangamSpin 150s linear infinite; }
+.spin-wrap--rev { animation-duration: 190s; animation-direction: reverse; }
+.s-hero.is-off .spin-wrap { animation-play-state: paused; }
+@keyframes sangamSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin-wrap { animation: none; } }
 .s-hero__label { position: absolute; bottom: 36px; font-size: 11px; letter-spacing: 0.34em; text-transform: uppercase; font-weight: 700; }
 .s-hero__side--w .s-hero__label { left: var(--gutter); color: var(--rice); }
 .s-hero__side--k .s-hero__label { right: var(--gutter); color: var(--madder); text-align: right; }
@@ -157,10 +163,11 @@ body { background: #0e0a08; }
 .studio__tools { display: grid; gap: 14px; align-content: start; }
 .tool-group { padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.02); }
 .tool-group h4 { font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--paper-3); font-weight: 700; margin-bottom: 12px; }
-.stamps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.stamps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .stamp { aspect-ratio: 1; border-radius: 10px; border: 1px solid var(--line); display: grid; place-items: center; transition: border-color 0.3s, transform 0.3s; padding: 4px; }
 .stamp:hover { border-color: var(--accent); transform: translateY(-2px); }
-.stamp svg { width: 100%; height: 100%; }
+.stamp svg, .stamp img { width: 100%; height: 100%; min-width: 0; min-height: 0; display: block; object-fit: contain; }
+.stamp { overflow: hidden; min-width: 0; }
 .stamp--w { background: var(--geru); }
 .stamp--k { background: var(--cream); }
 .stamp--f { background: linear-gradient(135deg, var(--geru) 50%, var(--cream) 50%); }
@@ -179,7 +186,7 @@ body { background: #0e0a08; }
 .studio__bar button[disabled] { opacity: 0.35; pointer-events: none; }
 .studio__bar .sp { flex: 1; }
 .studio__empty { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; font-family: var(--serif); font-style: italic; font-size: clamp(20px, 2vw, 28px); color: rgba(246, 239, 224, 0.55); text-align: center; padding: 20px; }
-@media (max-width: 900px) { .studio { grid-template-columns: 1fr; } .stamps { grid-template-columns: repeat(6, 1fr); } }
+@media (max-width: 900px) { .studio { grid-template-columns: 1fr; } .stamps { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 
 /* lightbox for reference images */
 .lightbox { position: fixed; inset: 0; z-index: 9200; background: rgba(8, 6, 4, 0.96); visibility: hidden; opacity: 0; transition: opacity 0.5s, visibility 0.5s; }
@@ -192,3 +199,8 @@ body { background: #0e0a08; }
 .lightbox__close { position: absolute; top: 20px; right: 20px; z-index: 3; width: 50px; height: 50px; border-radius: 50%; border: 1px solid var(--line-2); display: grid; place-items: center; background: rgba(14,10,8,.7); }
 .lightbox__close svg { width: 14px; height: 14px; }
 .lightbox__cap { position: absolute; left: 24px; bottom: 22px; right: 24px; z-index: 3; font-size: 12px; color: var(--paper-2); }
+
+/* Skip painting whole sections while they are off-screen (the page holds thousands of vector
+   shapes; only the part you are looking at needs to be drawn). */
+.s-hero { content-visibility: auto; contain-intrinsic-size: auto 100svh; }
+main > .sec, main > .artwork { content-visibility: auto; contain-intrinsic-size: auto 1100px; }

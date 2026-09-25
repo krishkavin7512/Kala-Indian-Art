@@ -133,9 +133,19 @@ p { margin: 0 0 1em; }
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 var(--gutter);
   z-index: 800;
-  mix-blend-mode: difference;
   color: #f1e8d6;
+  border-bottom: 1px solid transparent;
+  transform: translate3d(0, 0, 0);
+  transition: transform 0.55s var(--ease-out), background-color 0.45s, border-color 0.45s;
+  will-change: transform;
 }
+/* soft scrim so the bar reads over any image, without blend modes */
+.nav::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 150%; background: linear-gradient(180deg, rgba(8, 7, 5, var(--nav-scrim, 0.62)), rgba(8, 7, 5, 0)); pointer-events: none; z-index: -1; transition: opacity 0.45s; }
+/* scrolled: a frosted bar; scrolling down: it slides away; scrolling up or pointing at the top edge: it returns */
+.nav.is-solid { background: var(--nav-bg, rgba(11, 10, 8, 0.78)); border-bottom-color: var(--line); -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); }
+.nav.is-solid::before { opacity: 0; }
+.nav.is-hidden { transform: translate3d(0, -101%, 0); }
+.nav a, .nav button { text-shadow: 0 1px 12px rgba(0, 0, 0, 0.35); }
 .nav__brand { display: flex; align-items: baseline; gap: 12px; font-family: var(--serif); font-size: 26px; letter-spacing: 0.18em; font-weight: 500; }
 .nav__brand small { font-family: var(--indic); font-size: 15px; letter-spacing: 0; opacity: 0.7; }
 .nav__links { display: flex; gap: clamp(14px, 2.6vw, 40px); align-items: center; }

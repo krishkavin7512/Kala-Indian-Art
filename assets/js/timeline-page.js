@@ -367,6 +367,7 @@
       gsap.to(c, { yPercent: i % 2 ? 14 : -14, ease: "none", scrollTrigger: { trigger: ".k-hero", start: "top top", end: "bottom top", scrub: true } });
     });
     gsap.to(".k-hero__inner", { yPercent: 40, opacity: 0, ease: "none", scrollTrigger: { trigger: ".k-hero", start: "top top", end: "bottom top", scrub: true } });
+    return tl;
   }
 
   /* ---------- Boot ---------- */
@@ -375,8 +376,8 @@
   buildRuler();
   buildIndex();
   initDetail();
+  KALA.intro(heroIntro);
   KALA.ready.then(() => {
-    heroIntro();
     initHorizontal();
     initTilt();
     const imgs = $$(".vitrine__frame img");

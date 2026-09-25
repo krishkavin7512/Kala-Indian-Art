@@ -24,7 +24,7 @@
     w += `<circle r="420" fill="none" stroke="${C.rice}" stroke-width="2" stroke-dasharray="3 9" opacity=".6"/>`;
     w += Mo.warliFigure(0, 10, 0, 2.3, { arms: "M-6,-15 L4,-22 M6,-15 L10,-20" });
     w += `<path d="M10,-10 C50,-4 70,30 82,62" fill="none" stroke="${C.rice}" stroke-width="7" stroke-linecap="round"/><path d="M68,64 Q86,48 102,68 Q86,84 68,64Z" fill="${C.rice}"/>`;
-    $(".s-hero__side--w .s-hero__art").innerHTML = `<svg viewBox="-500 -500 1000 1000">${S.defs()}<g class="spin">${w}</g></svg>`;
+    $(".s-hero__side--w .s-hero__art").innerHTML = `<div class="spin-wrap">${S.defs()}<svg viewBox="-500 -500 1000 1000">${w}</svg></div>`;
 
     let k = `<circle r="440" fill="none" stroke="${C.madder}" stroke-width="3"/><circle r="452" fill="none" stroke="${C.kasimi}" stroke-width="1.5"/>`;
     for (let i = 0; i < 16; i++) {
@@ -40,7 +40,12 @@
       k += Mo.leaf(Math.cos(a) * 150, Math.sin(a) * 150, 88, a, i % 2 ? C.green : C.indigo, { w: 0.32 });
     }
     k += Mo.blossom(0, 0, 150, 0, [C.madder, C.indigo, C.mustard], R);
-    $(".s-hero__side--k .s-hero__art").innerHTML = `<svg viewBox="-500 -500 1000 1000">${S.defs()}<g class="spin spin--rev">${k}</g></svg>`;
+    $(".s-hero__side--k .s-hero__art").innerHTML = `<div class="spin-wrap spin-wrap--rev"><svg viewBox="-500 -500 1000 1000">${k}</svg></div>`;
+  }
+  function pauseHeroWhenHidden() {
+    const hero = $(".s-hero");
+    if (!("IntersectionObserver" in window)) return;
+    new IntersectionObserver((en) => hero.classList.toggle("is-off", !en[0].isIntersecting)).observe(hero);
   }
   function initSplit() {
     const hero = $(".s-hero"), div = $(".s-hero__divider");
@@ -63,11 +68,12 @@
     if (KALA.reduced) return;
     const hero = $(".s-hero");
     const st = { v: 100 };
-    gsap.to(st, { v: 50, duration: 2.2, ease: "kalaIO", delay: 0.2, onUpdate: () => hero.style.setProperty("--split", st.v + "%") });
-    gsap.from(".s-hero__center > div", { y: 40, opacity: 0, duration: 1.4, ease: "kala", stagger: 0.12, delay: 0.5 });
-    gsap.to(".s-hero .spin", { rotate: 360, duration: 140, ease: "none", repeat: -1, transformOrigin: "50% 50%" });
-    gsap.to(".s-hero .spin--rev", { rotate: -360, duration: 180, ease: "none", repeat: -1, overwrite: true, transformOrigin: "50% 50%" });
+    hero.style.setProperty("--split", "100%");
+    const tl = gsap.timeline();
+    tl.to(st, { v: 50, duration: 2.2, ease: "kalaIO", onUpdate: () => hero.style.setProperty("--split", st.v + "%") }, 0.2)
+      .from(".s-hero__center > div", { y: 40, opacity: 0, duration: 1.4, ease: "kala", stagger: 0.12 }, 0.5);
     gsap.to(".s-hero__art", { yPercent: 18, ease: "none", scrollTrigger: { trigger: ".s-hero", start: "top top", end: "bottom top", scrub: true } });
+    return tl;
   }
 
   /* ---------- Venn ---------- */
@@ -220,6 +226,54 @@
   const BGS = { geru: { fill: C.geru, label: "Geru wall", ink: C.rice }, cream: { fill: C.cream, label: "Kalamkari cloth", ink: "#2a1a10" }, indigo: { fill: C.indigo2, label: "Indigo", ink: C.rice } };
   const studio = { items: [], bg: "geru", border: "vine", sel: null, uid: 0 };
 
+  /* Static vector art (studio ground + border, and every stamp) is rasterised once into cached
+     images. The canvas then holds a handful of <image> elements instead of thousands of transformed
+     shapes, so dragging or resizing only repaints a few bitmaps. */
+  const RASTER = new Map();
+  function rasterize(key, svgInner, vb, pxW, pxH, type = "image/png") {
+    if (RASTER.has(key)) return RASTER.get(key);
+    const p = new Promise((resolve) => {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb.join(" ")}" width="${pxW}" height="${pxH}">${S.defs(true)}${svgInner}</svg>`;
+      const img = new Image();
+      const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
+      img.onload = () => {
+        const cv = document.createElement("canvas");
+        cv.width = pxW; cv.height = pxH;
+        cv.getContext("2d").drawImage(img, 0, 0, pxW, pxH);
+        URL.revokeObjectURL(url);
+        resolve(cv.toDataURL(type, 0.9));
+      };
+      img.onerror = () => resolve(null);
+      img.src = url;
+    });
+    RASTER.set(key, p);
+    p.then((u) => RASTER.set(key + ":done", u));
+    return p;
+  }
+  const ready = (key) => RASTER.get(key + ":done");
+  // real drawn bounds of each stamp (some motifs, like the peacock's tail, reach past their nominal box)
+  const BOUNDS = {};
+  function stampBox(type) {
+    if (BOUNDS[type]) return BOUNDS[type];
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("width", "0"); svg.setAttribute("height", "0");
+    svg.style.cssText = "position:absolute;left:-9999px;top:0;visibility:hidden";
+    svg.innerHTML = `<g>${stampSVG(type, "geru")}</g>`;
+    document.body.appendChild(svg);
+    const b = svg.firstChild.getBBox();
+    svg.remove();
+    const pad = 6;
+    return (BOUNDS[type] = [Math.floor(b.x - pad), Math.floor(b.y - pad), Math.ceil(b.width + pad * 2), Math.ceil(b.height + pad * 2)]);
+  }
+  function stampKey(type, bg) { return `stamp:${type}:${LIB[type].g === "k" ? "k" : bg}`; }
+  function bakeStamp(type, bg) { const vb = stampBox(type); return rasterize(stampKey(type, bg), stampSVG(type, bg), vb, vb[2] * 4, vb[3] * 4); }
+  function bgKey() { return `bg:${studio.bg}:${studio.border}`; }
+  function bgSVG() {
+    const bg = BGS[studio.bg];
+    return `<rect width="${SW}" height="${SH}" fill="${bg.fill}"/><rect width="${SW}" height="${SH}" fill="url(#${studio.bg === "cream" ? "clothTex" : "mudTex"})"/>` + borderSVG(studio.border, studio.bg);
+  }
+  function bakeBg() { return rasterize(bgKey(), bgSVG(), [0, 0, SW, SH], SW * 2, SH * 2, "image/jpeg"); }
   function stampSVG(type, bg) {
     let s = LIB[type].draw();
     if (LIB[type].g !== "k") s = s.split(C.rice).join(BGS[bg].ink);
@@ -244,11 +298,23 @@
   }
   function renderStudio() {
     const svg = $(".studio__canvas svg");
-    const bg = BGS[studio.bg];
-    let s = S.defs() + `<rect width="${SW}" height="${SH}" fill="${bg.fill}"/><rect width="${SW}" height="${SH}" fill="${bg.fill}" filter="url(#${studio.bg === "cream" ? "clothTex" : "mudTex"})"/>`;
-    s += borderSVG(studio.border, studio.bg);
-    s += `<g class="items">` + studio.items.map((it) => `<g class="item${studio.sel === it.id ? " is-selected" : ""}" data-id="${it.id}" transform="translate(${it.x},${it.y}) rotate(${it.r}) scale(${it.s})">${stampSVG(it.type, studio.bg)}<rect class="sel" x="${-LIB[it.type].box - 8}" y="${-LIB[it.type].box - 8}" width="${(LIB[it.type].box + 8) * 2}" height="${(LIB[it.type].box + 8) * 2}" rx="6"/></g>`).join("") + `</g>`;
+    S.defs();
+    const bgUrl = ready(bgKey());
+    let s = bgUrl ? `<image href="${bgUrl}" width="${SW}" height="${SH}" preserveAspectRatio="none"/>` : bgSVG();
+    let pending = !bgUrl;
+    s += `<g class="items">` + studio.items.map((it) => {
+      const u = ready(stampKey(it.type, studio.bg));
+      const vb = stampBox(it.type);
+      if (!u) pending = true;
+      const art = u ? `<image href="${u}" x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}"/>` : stampSVG(it.type, studio.bg);
+      return `<g class="item${studio.sel === it.id ? " is-selected" : ""}" data-id="${it.id}" transform="translate(${it.x},${it.y}) rotate(${it.r}) scale(${it.s})">${art}<rect class="sel" x="${-LIB[it.type].box - 8}" y="${-LIB[it.type].box - 8}" width="${(LIB[it.type].box + 8) * 2}" height="${(LIB[it.type].box + 8) * 2}" rx="6"/></g>`;
+    }).join("") + `</g>`;
     svg.innerHTML = s;
+    if (pending) {
+      const jobs = [bakeBg(), ...studio.items.map((it) => bakeStamp(it.type, studio.bg))];
+      clearTimeout(renderStudio.t);
+      Promise.all(jobs).then(() => { renderStudio.t = setTimeout(() => { if (!studio.dragging) renderStudio(); }, 0); });
+    }
     $(".studio__empty").style.display = studio.items.length ? "none" : "";
     $$(".studio__bar [data-need-sel]").forEach((b) => (b.disabled = !studio.sel));
     $$(".bg-row button").forEach((b) => b.classList.toggle("is-active", b.dataset.bg === studio.bg));
@@ -262,12 +328,17 @@
   }
   const selItem = () => studio.items.find((i) => i.id === studio.sel);
   function buildStudio() {
+    const stampImgs = () => Object.keys(LIB).forEach((k) => {
+      const bg = LIB[k].g === "k" ? "cream" : "geru";
+      bakeStamp(k, bg).then((u) => { const b = $(`.stamp[data-stamp="${k}"]`); if (u && b) b.innerHTML = `<img src="${u}" alt="" draggable="false">`; });
+    });
     $(".stamps").innerHTML = Object.entries(LIB).map(([k, v]) => {
       const bg = v.g === "k" ? "cream" : "geru";
-      return `<button class="stamp stamp--${v.g}" type="button" data-stamp="${k}" title="${v.label}" aria-label="Add ${v.label}"><svg viewBox="${-v.box - 6} ${-v.box - 6} ${(v.box + 6) * 2} ${(v.box + 6) * 2}">${S.defs()}${stampSVG(k, bg)}</svg></button>`;
+      return `<button class="stamp stamp--${v.g}" type="button" data-stamp="${k}" title="${v.label}" aria-label="Add ${v.label}"><svg viewBox="${-v.box - 6} ${-v.box - 6} ${(v.box + 6) * 2} ${(v.box + 6) * 2}">${stampSVG(k, bg)}</svg></button>`;
     }).join("");
     $(".bg-row").innerHTML = Object.entries(BGS).map(([k, b]) => `<button type="button" data-bg="${k}"><i style="background:${b.fill}"></i>${b.label}</button>`).join("");
     $(".border-row").innerHTML = [["vine", "Kalamkari vine"], ["frieze", "Warli frieze"], ["none", "None"]].map(([k, l]) => `<button type="button" data-border="${k}">${l}</button>`).join("");
+    stampImgs();
     $(".stamps").addEventListener("click", (e) => { const b = e.target.closest("[data-stamp]"); if (b) addItem(b.dataset.stamp); });
     $(".bg-row").addEventListener("click", (e) => { const b = e.target.closest("[data-bg]"); if (b) { studio.bg = b.dataset.bg; renderStudio(); } });
     $(".border-row").addEventListener("click", (e) => { const b = e.target.closest("[data-border]"); if (b) { studio.border = b.dataset.border; renderStudio(); } });
@@ -287,6 +358,7 @@
           const keep = studio.sel; studio.sel = null; renderStudio();
           const svg = $(".studio__canvas svg").cloneNode(true);
           svg.setAttribute("xmlns", "http://www.w3.org/2000/svg"); svg.setAttribute("width", SW); svg.setAttribute("height", SH);
+          svg.insertAdjacentHTML("afterbegin", S.defs(true));
           downloadSVG(svg.outerHTML, SW * 2, SH * 2, "my-sangam.png");
           studio.sel = keep; break;
         }
@@ -304,6 +376,7 @@
       studio.sel = id;
       const p = pt(e);
       drag = { it, dx: p.x - it.x, dy: p.y - it.y, pid: e.pointerId };
+      studio.dragging = true;
       svgEl.setPointerCapture(e.pointerId);
       $$(".studio__canvas .item").forEach((n) => n.classList.toggle("is-selected", +n.dataset.id === id));
       $$(".studio__bar [data-need-sel]").forEach((b) => (b.disabled = false));
@@ -315,7 +388,7 @@
       const g = svgEl.querySelector(`.item[data-id="${drag.it.id}"]`);
       if (g) g.setAttribute("transform", `translate(${drag.it.x},${drag.it.y}) rotate(${drag.it.r}) scale(${drag.it.s})`);
     });
-    const end = () => { if (drag) { drag = null; renderStudio(); } };
+    const end = () => { if (drag) { drag = null; studio.dragging = false; renderStudio(); } };
     svgEl.addEventListener("pointerup", end);
     svgEl.addEventListener("pointercancel", end);
     svgEl.addEventListener("wheel", (e) => {
@@ -374,13 +447,14 @@
 
   /* ---------- Boot ---------- */
   buildHero();
+  pauseHeroWhenHidden();
   initSplit();
   buildVenn();
   buildArtwork();
   buildStudio();
   initLightbox();
+  KALA.intro(heroIntro);
   KALA.ready.then(() => {
-    heroIntro();
     if (!KALA.reduced && !document.documentElement.classList.contains("shot")) {
       gsap.set(".step", { y: 50, opacity: 0 });
       KALA.onView($(".steps"), () => gsap.to(".step", { y: 0, opacity: 1, duration: 1.1, ease: "kala", stagger: 0.1 }), 0.1);
