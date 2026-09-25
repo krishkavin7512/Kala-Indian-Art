@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en" class="no-js" data-root="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kāla — 5,000 Years of Indian Art</title>
+  <meta name="description" content="An interactive timeline of Indian art: ten eras and twenty-eight artifacts, from the Indus cities to the modern age, with deep-zoom photographs and 3D museum scans.">
+  <meta name="theme-color" content="#0b0a08">
+  <meta property="og:title" content="Kāla — 5,000 Years of Indian Art">
+  <meta property="og:description" content="Walk through ten eras of Indian art. Click any artifact to explore it in full resolution or in 3D.">
+  <meta property="og:image" content="../assets/img/t/t-nataraja-sm.jpg">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <script>document.documentElement.className = document.documentElement.className.replace("no-js", "js");</script>
+  <link rel="stylesheet" href="../assets/css/core.css?v=1790333794">
+  <link rel="stylesheet" href="../assets/css/timeline.css?v=1790333794">
+</head>
+<body data-loader-word="काल" data-loader-sub="Kāla · 5,000 years of Indian art">
+
+  <nav class="nav" aria-label="Main">
+    <a class="nav__brand" href="../index.html" data-transition>KALĀ <small>कला</small></a>
+    <div class="nav__links">
+      <a href="index.html" aria-current="page" class="keep"><span class="num">i.</span>Kāla</a>
+      <a href="../map/index.html" data-transition><span class="num">ii.</span>Deśa</a>
+      <a href="../fusion/index.html" data-transition><span class="num">iii.</span>Saṅgam</a>
+      <button class="sound" data-sound type="button"></button>
+    </div>
+  </nav>
+
+  <main id="main">
+    <!-- HERO -->
+    <header class="k-hero">
+      <div class="k-hero__bg" aria-hidden="true"></div>
+      <div class="k-hero__inner">
+        <div class="k-hero__ghost" aria-hidden="true">काल</div>
+        <div class="eyebrow">Journey I · Interactive Timeline</div>
+        <h1 class="display gold-text">Kāla</h1>
+        <p class="k-hero__sub">Five thousand years of Indian art, walked through one lit vitrine at a time.</p>
+        <div class="k-hero__meta"></div>
+      </div>
+      <div class="scroll-cue" aria-hidden="true">Scroll to begin<i></i></div>
+    </header>
+
+    <!-- HOW TO -->
+    <section class="howto" aria-labelledby="howto-title">
+      <div class="howto__head">
+        <h2 id="howto-title" data-split><em>Kāla</em> means time. <em>Kalā</em> means art. This is where they meet.</h2>
+        <p class="lede" data-reveal>A museum without walls: each era is a hall, each object a lit case. Every artifact opens into a full-resolution photograph you can zoom into, and four of them into real 3D museum scans.</p>
+      </div>
+      <div class="howto__steps">
+        <div class="howto__step" data-reveal><span class="n">i.</span><h3>Walk</h3><p>Scroll and the timeline slides sideways through ten eras. The ruler at the bottom shows where you are in time; tap an era numeral to jump.</p></div>
+        <div class="howto__step" data-reveal><span class="n">ii.</span><h3>Open a case</h3><p>Click any artifact to open its vitrine: history, materials, where it lives today and what to look for. Use ← → to move between objects.</p></div>
+        <div class="howto__step" data-reveal><span class="n">iii.</span><h3>Look closer</h3><p>Scroll or pinch to zoom into photographs at full resolution. Objects marked <b style="color:var(--accent)">3D</b> can be rotated as museum scans.</p></div>
+      </div>
+    </section>
+
+    <!-- JOURNEY -->
+    <section class="hz" aria-label="Timeline of Indian art">
+      <div class="hz__track"></div>
+    </section>
+
+    <!-- INDEX -->
+    <section class="index" id="index" aria-labelledby="index-title">
+      <div class="index__head">
+        <div>
+          <div class="eyebrow" data-reveal>The collection</div>
+          <h2 id="index-title" data-split>All <em>twenty-eight</em> objects</h2>
+        </div>
+        <div class="filters" role="toolbar" aria-label="Filter by type" data-reveal></div>
+      </div>
+      <div class="grid"></div>
+    </section>
+
+    <!-- ABOUT -->
+    <section class="brief" aria-labelledby="brief-title">
+      <div class="brief__grid">
+        <div>
+          <div class="eyebrow" data-reveal>About this project</div>
+          <h2 id="brief-title" data-split>An <em>engaging, educational</em> tool that makes art history visible.</h2>
+        </div>
+        <dl data-reveal>
+          <dt>Purpose</dt><dd>To create an engaging, educational tool that visually represents the history of Indian art, with clickable replicas of key artifacts that give detailed information and historical context.</dd>
+          <dt>What's inside</dt><dd>10 eras from c. 3300 BCE to 1950 CE · 28 artifacts spanning sculpture, painting, architecture, bronze and seals · deep-zoom photographs of 2K+ resolution · 4 rotatable 3D scans from the Cleveland Museum of Art, Minneapolis Institute of Art, the British Museum and the Didarganj Yakshi scan.</dd>
+          <dt>Built with</dt><dd>Hand-written <strong>HTML, CSS and JavaScript</strong> rather than a timeline template — GSAP for motion, Lenis for smooth scrolling — with Sketchfab embeds for the 3D replicas.</dd>
+          <dt>Sources</dt><dd>Photographs from Wikimedia Commons under open licences, credited on each object and on the <a href="../credits/index.html" data-transition style="border-bottom:1px solid var(--line-2)">credits page</a>. Text written by the team from museum records and standard art-history references.</dd>
+        </dl>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer" data-footer data-big="Kāla"></footer>
+
+  <!-- Time ruler -->
+  <div class="ruler" aria-label="Position in time">
+    <div class="ruler__row">
+      <div class="ruler__year" aria-live="polite"></div>
+      <div class="ruler__era"></div>
+    </div>
+    <div class="ruler__bar"></div>
+  </div>
+
+  <!-- Detail overlay -->
+  <div class="detail" role="dialog" aria-modal="true" aria-labelledby="detail-title" aria-hidden="true">
+    <div class="detail__stage">
+      <div class="detail__tabs" role="tablist">
+        <button type="button" role="tab" data-tab="photo" aria-selected="true">Photograph</button>
+        <button type="button" role="tab" data-tab="3d" aria-selected="false">3D scan</button>
+      </div>
+      <div class="detail__viewer" aria-label="Zoomable photograph"></div>
+      <div class="detail__3d"></div>
+      <div class="detail__zoom">
+        <button type="button" data-z="out" aria-label="Zoom out">−</button>
+        <output>100%</output>
+        <button type="button" data-z="in" aria-label="Zoom in">+</button>
+        <button type="button" data-z="fit" aria-label="Fit to screen" style="font-size:13px">⤢</button>
+      </div>
+      <div class="detail__res"><span class="dot"></span> Loading</div>
+      <div class="detail__hint">Scroll or pinch to zoom · drag to pan · double-click</div>
+    </div>
+    <aside class="detail__panel" data-lenis-prevent>
+      <button class="detail__close" type="button" aria-label="Close"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l14 14M15 1L1 15"/></svg></button>
+      <div class="content"></div>
+    </aside>
+  </div>
+
+  <script src="../assets/lib/gsap.min.js?v=1790333794"></script>
+  <script src="../assets/lib/ScrollTrigger.min.js?v=1790333794"></script>
+  <script src="../assets/lib/SplitText.min.js?v=1790333794"></script>
+  <script src="../assets/lib/CustomEase.min.js?v=1790333794"></script>
+  <script src="../assets/lib/Flip.min.js?v=1790333794"></script>
+  <script src="../assets/lib/lenis.min.js?v=1790333794"></script>
+  <script src="../assets/js/core.js?v=1790333794"></script>
+  <script src="../assets/js/tanpura.js?v=1790333794"></script>
+  <script src="../assets/js/viewer.js?v=1790333794"></script>
+  <script src="../assets/data/timeline.js?v=1790333794"></script>
+  <script src="../assets/data/credits.js?v=1790333794"></script>
+  <script src="../assets/js/timeline-page.js?v=1790333794"></script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en" class="no-js" data-root="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deśa — An Atlas of Indian Art</title>
+  <meta name="description" content="An interactive map of India's art: 35 places from Bhimbetka to Santiniketan, filterable by art form and age, with animated trails showing how styles travelled.">
+  <meta name="theme-color" content="#060a14">
+  <meta property="og:title" content="Deśa — An Atlas of Indian Art">
+  <meta property="og:description" content="Explore where Indian art was made — and how it travelled.">
+  <meta property="og:image" content="../assets/img/m/m-hampi-sm.jpg">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <script>document.documentElement.className = document.documentElement.className.replace("no-js", "js");</script>
+  <link rel="stylesheet" href="../assets/css/core.css?v=1790333794">
+  <link rel="stylesheet" href="../assets/css/map.css?v=1790333794">
+</head>
+<body data-loader-word="देश" data-loader-sub="Deśa · an atlas of Indian art">
+
+  <nav class="nav" aria-label="Main">
+    <a class="nav__brand" href="../index.html" data-transition>KALĀ <small>कला</small></a>
+    <div class="nav__links">
+      <a href="../timeline/index.html" data-transition><span class="num">i.</span>Kāla</a>
+      <a href="index.html" aria-current="page" class="keep"><span class="num">ii.</span>Deśa</a>
+      <a href="../fusion/index.html" data-transition><span class="num">iii.</span>Saṅgam</a>
+      <button class="sound" data-sound type="button"></button>
+    </div>
+  </nav>
+
+  <main id="main">
+    <!-- HERO -->
+    <header class="d-hero">
+      <div class="d-hero__ghost" aria-hidden="true">देश</div>
+      <div>
+        <div class="eyebrow">Journey II · Interactive Art Map</div>
+        <h1 class="display gold-text">Deśa</h1>
+        <p class="d-hero__sub">An atlas of Indian art — where each tradition was born, and the roads it travelled.</p>
+        <div class="d-hero__stats"></div>
+        <a class="btn" href="#atlas" data-magnetic="0.25">Enter the atlas <span class="arrow"></span></a>
+      </div>
+      <div class="d-hero__map" aria-hidden="true"><svg></svg></div>
+    </header>
+
+    <!-- ATLAS -->
+    <section class="atlas" id="atlas" aria-label="Interactive map of Indian art">
+      <svg class="atlas__svg" role="img" aria-label="Map of India with art locations"></svg>
+
+      <aside class="atlas__panel" aria-label="Filters and places">
+        <div class="atlas__head">
+          <div class="atlas__title"><h2>Deśa</h2><span>देश</span><button class="panel-toggle" type="button">Filters</button></div>
+          <div class="atlas__count"></div>
+          <label class="search"><span class="sr-only">Search places</span>
+            <svg viewBox="0 0 16 16" stroke-width="1.6"><circle cx="7" cy="7" r="5.5"/><path d="M11 11l4 4"/></svg>
+            <input type="search" placeholder="Search a place, state or art form…" autocomplete="off">
+          </label>
+        </div>
+        <div class="atlas__section"><span class="atlas__label">Art form</span><div class="chips cat-chips"></div></div>
+        <div class="atlas__section"><span class="atlas__label">Age</span><div class="chips age-chips"></div></div>
+        <div class="atlas__section"><span class="atlas__label">Trails of influence</span><div class="trails"></div></div>
+        <div class="list" data-lenis-prevent></div>
+      </aside>
+
+      <aside class="atlas__drawer" aria-label="Place details" data-lenis-prevent></aside>
+
+      <div class="atlas__zoom">
+        <button type="button" data-z="in" aria-label="Zoom in">+</button>
+        <button type="button" data-z="out" aria-label="Zoom out">−</button>
+        <button type="button" data-z="home" aria-label="Reset view" style="font-size:13px">⌂</button>
+      </div>
+      <div class="atlas__legend" aria-hidden="true"></div>
+      <div class="atlas__note">Boundaries of India as per the Survey of India (data: DataMeet, CC BY-SA). Map is illustrative, not to scale.</div>
+      <div class="atlas__hint">Click the map, then scroll to zoom · drag to pan</div>
+      <div class="atlas__state" aria-hidden="true"></div>
+      <div class="tip" aria-hidden="true"></div>
+
+      <div class="caption" role="status">
+        <div class="caption__top"><span></span><em style="font-style:normal"></em></div>
+        <div class="caption__name"></div>
+        <div class="caption__note"></div>
+        <div class="caption__bar"><i></i></div>
+        <div class="caption__ctrl">
+          <button type="button" data-a="prev">← Prev</button>
+          <button type="button" data-a="next">Next →</button>
+          <button type="button" data-a="open">Open details</button>
+          <button type="button" data-a="stop">End trail</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TRAILS -->
+    <section class="trails-sec" aria-labelledby="trails-title">
+      <div class="eyebrow" data-reveal>Spread &amp; influence</div>
+      <h2 id="trails-title" data-split>Art <em>travels.</em> Follow it.</h2>
+      <p class="lede" data-reveal>Styles moved with monks, merchants, pilgrims and painters looking for patrons. Each trail below plays as a guided journey on the map, showing how one idea reached new regions and changed on the way.</p>
+      <div class="trail-cards"></div>
+    </section>
+
+    <!-- ABOUT -->
+    <section class="brief" aria-labelledby="brief-title">
+      <div class="brief__grid">
+        <div>
+          <div class="eyebrow" data-reveal>About this project</div>
+          <h2 id="brief-title" data-split>The <em>geography</em> of Indian art, made explorable.</h2>
+        </div>
+        <dl data-reveal>
+          <dt>Purpose</dt><dd>To explore the geographic spread and influence of different art styles across India, with images, descriptions and historical context about local art movements, artists and artworks at each location.</dd>
+          <dt>What's inside</dt><dd>35 locations across 16 states and union territories · 5 art forms from rock painting to modern movements · filters by art form and age · 4 animated trails of influence · a full-resolution photograph for every location · links into the Kāla timeline.</dd>
+          <dt>The map</dt><dd>Drawn from official Survey of India boundaries (via DataMeet) and projected with a Lambert conformal conic projection, as used for maps of India. Built in HTML, SVG and JavaScript with D3.</dd>
+          <dt>Sources</dt><dd>Photographs from Wikimedia Commons under open licences, credited on each place and on the <a href="../credits/index.html" data-transition style="border-bottom:1px solid var(--line-2)">credits page</a>.</dd>
+        </dl>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer" data-footer data-big="Deśa"></footer>
+
+  <div class="lightbox" role="dialog" aria-modal="true" aria-label="Full-resolution photograph">
+    <div class="detail__viewer"></div>
+    <button class="lightbox__close" type="button" aria-label="Close"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l14 14M15 1L1 15"/></svg></button>
+    <div class="lightbox__cap"></div>
+  </div>
+
+  <script src="../assets/lib/gsap.min.js?v=1790333794"></script>
+  <script src="../assets/lib/ScrollTrigger.min.js?v=1790333794"></script>
+  <script src="../assets/lib/SplitText.min.js?v=1790333794"></script>
+  <script src="../assets/lib/CustomEase.min.js?v=1790333794"></script>
+  <script src="../assets/lib/lenis.min.js?v=1790333794"></script>
+  <script src="../assets/lib/d3.min.js?v=1790333794"></script>
+  <script src="../assets/js/core.js?v=1790333794"></script>
+  <script src="../assets/js/tanpura.js?v=1790333794"></script>
+  <script src="../assets/js/viewer.js?v=1790333794"></script>
+  <script src="../assets/data/india-geo.js?v=1790333794"></script>
+  <script src="../assets/data/map.js?v=1790333794"></script>
+  <script src="../assets/data/credits.js?v=1790333794"></script>
+  <script src="../assets/js/map-page.js?v=1790333794"></script>
+</body>
+</html>

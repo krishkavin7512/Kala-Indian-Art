@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en" class="no-js" data-root="">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KALĀ — Three Journeys Through Indian Art</title>
+  <meta name="description" content="KALĀ: three interactive websites on Indian art — Kāla, a timeline of 28 artifacts; Deśa, an atlas of 35 places; and Saṅgam, an original Warli × Kalamkari fusion artwork.">
+  <meta name="theme-color" content="#0b0a08">
+  <meta property="og:title" content="KALĀ — Three Journeys Through Indian Art">
+  <meta property="og:description" content="Time, land and confluence: an interactive timeline, an art map of India, and a Warli × Kalamkari fusion artwork.">
+  <meta property="og:image" content="assets/img/t/t-nataraja-sm.jpg">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <script>document.documentElement.className = document.documentElement.className.replace("no-js", "js");</script>
+  <link rel="stylesheet" href="assets/css/core.css?v=1790333794">
+  <link rel="stylesheet" href="assets/css/hub.css?v=1790333794">
+</head>
+<body data-loader-word="कला" data-loader-sub="Kalā · three journeys through Indian art">
+
+  <nav class="nav" aria-label="Main">
+    <a class="nav__brand" href="index.html">KALĀ <small>कला</small></a>
+    <div class="nav__links">
+      <a href="timeline/index.html" data-transition><span class="num">i.</span>Kāla</a>
+      <a href="map/index.html" data-transition><span class="num">ii.</span>Deśa</a>
+      <a href="fusion/index.html" data-transition><span class="num">iii.</span>Saṅgam</a>
+      <button class="sound" data-sound type="button"></button>
+    </div>
+  </nav>
+
+  <main id="main">
+    <header class="h-hero">
+      <canvas aria-hidden="true"></canvas>
+      <div class="h-hero__mandala" aria-hidden="true"></div>
+      <div class="h-hero__inner">
+        <div class="eyebrow">Interactive journeys through Indian art</div>
+        <h1 class="display gold-text">KALĀ</h1>
+        <div class="h-hero__deva">कला</div>
+        <p class="h-hero__sub">Three journeys through Indian art — in time, across the land, and where two traditions meet.</p>
+        <div class="h-hero__words">
+          <a href="timeline/index.html" data-transition><em>i.</em>Time</a>
+          <a href="map/index.html" data-transition><em>ii.</em>Land</a>
+          <a href="fusion/index.html" data-transition><em>iii.</em>Confluence</a>
+        </div>
+      </div>
+      <div class="scroll-cue" aria-hidden="true" style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:12px;font-size:10px;letter-spacing:.4em;text-transform:uppercase;color:var(--paper-3);font-weight:600">Choose a journey</div>
+    </header>
+
+    <section class="portals" aria-label="The three journeys">
+      <a class="portal portal--time" href="timeline/index.html" data-transition data-cursor="Enter">
+        <div class="portal__bg"><img src="assets/img/t/t-nataraja-sm.jpg" alt=""></div>
+        <span class="portal__num">i.</span>
+        <span class="portal__tag">Journey I<br>Timeline</span>
+        <div class="portal__body">
+          <div class="portal__native">काल</div>
+          <h2 class="portal__title">Kāla</h2>
+          <p class="portal__desc">An interactive timeline: walk through ten eras and twenty-eight artifacts, from the Dancing Girl of Mohenjo-daro to the Santhal Family — deep-zoom photographs and four real 3D museum scans.</p>
+          <span class="portal__cta">Enter the timeline <i></i></span>
+        </div>
+      </a>
+      <a class="portal portal--map" href="map/index.html" data-transition data-cursor="Enter">
+        <div class="portal__bg"></div>
+        <span class="portal__num">ii.</span>
+        <span class="portal__tag">Journey II<br>Art map</span>
+        <div class="portal__body">
+          <div class="portal__native">देश</div>
+          <h2 class="portal__title">Deśa</h2>
+          <p class="portal__desc">An interactive atlas of 35 places where Indian art was made — Bhimbetka to Santiniketan — with filters, full-resolution images and animated trails that show how styles travelled.</p>
+          <span class="portal__cta">Open the atlas <i></i></span>
+        </div>
+      </a>
+      <a class="portal portal--fusion" href="fusion/index.html" data-transition data-cursor="Enter">
+        <div class="portal__bg"><div class="art"></div></div>
+        <span class="portal__num">iii.</span>
+        <span class="portal__tag">Journey III<br>Fusion</span>
+        <div class="portal__body">
+          <div class="portal__native">संगम</div>
+          <h2 class="portal__title">Saṅgam</h2>
+          <p class="portal__desc">Warli meets Kalamkari: our original artwork “The Tree of Life and the Tarpa Dance”, explorable layer by layer, with a comparison of the two styles and a studio to make your own fusion.</p>
+          <span class="portal__cta">See the fusion <i></i></span>
+        </div>
+      </a>
+    </section>
+
+    <section class="overview" aria-labelledby="ov-title">
+      <div class="eyebrow" data-reveal>The project</div>
+      <h2 id="ov-title" data-split>One idea, <em>three</em> interactive works.</h2>
+      <p class="lede" data-reveal>Each journey is a complete website of its own, built by hand in HTML, CSS and JavaScript, sharing one design language — a dark museum lit in gold. Together they move from <em>when</em> Indian art was made, to <em>where</em>, to <em>how</em> its traditions can meet today.</p>
+      <table class="a-table" data-reveal>
+        <thead><tr><th></th><th>Journey</th><th>The idea</th><th>What's inside</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>i.</td><td class="t">Interactive Timeline with Artifacts<small>Kāla</small></td><td>An interactive digital timeline with clickable virtual replicas of key artifacts from different periods of Indian art.</td><td>A horizontal museum walk through 10 eras and 28 artifacts; deep-zoom 2K+ photographs; 4 rotatable 3D scans; filterable index.</td><td><a class="go" href="timeline/index.html" data-transition>Kāla →</a></td></tr>
+          <tr><td>ii.</td><td class="t">Interactive Art Map<small>Deśa</small></td><td>An interactive digital map of key locations in Indian art history, with images, descriptions and historical context.</td><td>A custom map with official Survey of India boundaries; 35 places; filters by art form and age; 4 animated trails of influence.</td><td><a class="go" href="map/index.html" data-transition>Deśa →</a></td></tr>
+          <tr><td>iii.</td><td class="t">Regional Painting Fusion<small>Saṅgam</small></td><td>An artwork combining elements of two or more regional painting styles, exploring their similarities and differences.</td><td>An original Warli × Kalamkari artwork drawn in code, with layer-by-layer deconstruction, a comparison of the two styles and a fusion studio.</td><td><a class="go" href="fusion/index.html" data-transition>Saṅgam →</a></td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="footer" data-footer data-big="Kalā"></footer>
+
+  <script src="assets/lib/gsap.min.js?v=1790333794"></script>
+  <script src="assets/lib/ScrollTrigger.min.js?v=1790333794"></script>
+  <script src="assets/lib/SplitText.min.js?v=1790333794"></script>
+  <script src="assets/lib/CustomEase.min.js?v=1790333794"></script>
+  <script src="assets/lib/lenis.min.js?v=1790333794"></script>
+  <script src="assets/js/core.js?v=1790333794"></script>
+  <script src="assets/js/tanpura.js?v=1790333794"></script>
+  <script src="assets/data/india-geo.js?v=1790333794"></script>
+  <script src="assets/js/fusion-art.js?v=1790333794"></script>
+  <script src="assets/js/hub-page.js?v=1790333794"></script>
+</body>
+</html>
